@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ChatType {
+  DIRECT
+  GROUP
+}
+
+model User {
+  id        String       @id @default(uuid())
+  name      String
+  createdAt DateTime     @default(now()) @map("created_at")
+  chats     ChatMember[]
+
+  @@map("users")
+}
+
+model Chat {
+  id        String       @id @default(uuid())
+  type      ChatType     @default(DIRECT)
+  directKey String?      @unique @map("direct_key")
+  createdAt DateTime     @default(now()) @map("created_at")
+  members   ChatMember[]
+  name      String?
+  createdBy String?  @map("created_by")
+
+  @@map("chats")
+}
+
+model ChatMember {
+  chatId   String   @map("chat_id")
+  userId   String   @map("user_id")
+  joinedAt DateTime @default(now()) @map("joined_at")
+  chat     Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([chatId, userId])
+  @@index([userId])
+  @@map("chat_members")
+}
